@@ -1,0 +1,790 @@
+.background {
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(to bottom, skyblue 50%, #4CAF50 50%);
+    margin: 0;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    justify-content: center;
+    position: relative;
+}
+
+.triangle {
+    width: 0;
+    height: 0;
+    border-left: 50px solid transparent;
+    border-right: 50px solid transparent;
+    border-top: 100px solid pink;
+    position: relative;
+    filter: drop-shadow(0 0 2px purple);
+    z-index: 2;
+    margin-bottom: -1px;
+}
+
+.eye {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background-color: black;
+    border-radius: 50%;
+    top: -70px;
+}
+
+.left-eye {
+    left: -10px;
+}
+
+.right-eye {
+    right: -10px;
+}
+
+.nose {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 8px solid #333;
+    top: -55px;
+    left: -4px;
+}
+
+.mouth {
+    position: absolute;
+    width: 16px;
+    height: 8px;
+    border-bottom: 2px solid red;
+    border-radius: 0 0 8px 8px;
+    top: -45px;
+    left: -8px;
+}
+
+.stick {
+    width: 15px;
+    height: 60px;
+    background-color: pink;
+    border: 2px solid purple;
+    border-radius: 5px;
+    margin-top: -1px;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    margin-top: -20px;
+}
+
+.sun {
+    position: absolute;
+    top: 40px;
+    right: 60px;
+    width: 80px;
+    height: 80px;
+    background: orange;
+    border-radius: 50%;
+    box-shadow: 0 0 50px #ffb700;
+}
+
+.sun::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 500px;
+    height: 400px;
+    background: repeating-linear-gradient(
+        -60deg,
+        transparent,
+        transparent 40px,
+        rgba(255, 165, 0, 0.1) 40px,
+        rgba(255, 165, 0, 0.1) 60px
+    );
+    transform: translate(-50%, -50%) rotate(-30deg);
+    transform-origin: 0 50%;
+    z-index: -1;
+}
+
+.sun::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 400px;
+    height: 300px;
+    background: repeating-linear-gradient(
+        -30deg,
+        transparent,
+        transparent 30px,
+        rgba(255, 165, 0, 0.15) 30px,
+        rgba(255, 165, 0, 0.15) 50px
+    );
+    transform: translate(-50%, -50%) rotate(15deg);
+    transform-origin: 0 50%;
+    z-index: -1;
+}
+
+.sunray {
+    position: absolute;
+    top: 80px;
+    right: 100px;
+    width: 300px;
+    height: 200px;
+    background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 35px,
+        rgba(255, 165, 0, 0.12) 35px,
+        rgba(255, 165, 0, 0.12) 55px
+    );
+    transform: rotate(-15deg);
+    z-index: 0;
+}
+
+.cloud {
+    position: absolute;
+    background: white;
+    border-radius: 50px;
+    filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1));
+    animation: floatCloud linear infinite;
+}
+
+.cloud::before,
+.cloud::after {
+    content: '';
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+}
+
+.cloud1 {
+    width: 100px;
+    height: 30px;
+    top: 80px;
+    left: 100px;
+    animation-duration: 15s;
+}
+
+.cloud1::before {
+    width: 40px;
+    height: 40px;
+    top: -20px;
+    left: 15px;
+}
+
+.cloud1::after {
+    width: 50px;
+    height: 50px;
+    top: -25px;
+    left: 35px;
+}
+
+.cloud2 {
+    width: 80px;
+    height: 25px;
+    top: 150px;
+    left: 400px;
+    animation-duration: 12s;
+    animation-delay: -3s;
+}
+
+.cloud2::before {
+    width: 35px;
+    height: 35px;
+    top: -18px;
+    left: 10px;
+}
+
+.cloud2::after {
+    width: 45px;
+    height: 45px;
+    top: -22px;
+    left: 25px;
+}
+
+.cloud3 {
+    width: 120px;
+    height: 35px;
+    top: 50px;
+    left: 250px;
+    animation-duration: 18s;
+    animation-delay: -7s;
+}
+
+.cloud3::before {
+    width: 45px;
+    height: 45px;
+    top: -23px;
+    left: 20px;
+}
+
+.cloud3::after {
+    width: 55px;
+    height: 55px;
+    top: -28px;
+    left: 45px;
+}
+
+.cloud4 {
+    width: 100px;
+    height: 30px;
+    top: 120px;
+    left: 600px;
+    animation-duration: 8s;
+    animation-delay: -2s;
+}
+
+.cloud4::before {
+    width: 40px;
+    height: 40px;
+    top: -20px;
+    left: 15px;
+}
+
+.cloud4::after {
+    width: 50px;
+    height: 50px;
+    top: -25px;
+    left: 35px;
+}
+
+.cloud5 {
+    width: 120px;
+    height: 35px;
+    top: 40px;
+    left: 750px;
+    animation-duration: 10s;
+    animation-delay: -4s;
+}
+
+.cloud5::before {
+    width: 45px;
+    height: 45px;
+    top: -23px;
+    left: 20px;
+}
+
+.cloud5::after {
+    width: 55px;
+    height: 55px;
+    top: -28px;
+    left: 45px;
+}
+
+.cloud6 {
+    width: 90px;
+    height: 28px;
+    top: 180px;
+    left: 850px;
+    animation-duration: 7s;
+    animation-delay: -1s;
+}
+
+.cloud6::before {
+    width: 38px;
+    height: 38px;
+    top: -19px;
+    left: 12px;
+}
+
+.cloud6::after {
+    width: 48px;
+    height: 48px;
+    top: -24px;
+    left: 32px;
+}
+
+.hole {
+    width: 100px;
+    height: 50px;
+    background-color: black;
+    border-radius: 50px 50px 0 0;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.character {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    transform-origin: center center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: left 0.2s ease, bottom 0.2s ease;
+}
+
+.snow-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+.snowflake {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: fall linear forwards;
+}
+
+@keyframes fall {
+    to {
+        transform: translateY(100vh);
+    }
+} 
+
+.body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.arm {
+    position: absolute;
+    width: 10px;
+    height: 40px;
+    background-color: pink;
+    border: 2px solid purple;
+    border-radius: 5px;
+    top: -20px;
+}
+
+.left-arm {
+    left: -30px;
+    transform: rotate(-30deg);
+}
+
+.right-arm {
+    right: -30px;
+    transform: rotate(30deg);
+}
+
+.legs {
+    display: flex;
+    justify-content: space-between;
+    width: 40px;
+    margin-top: -2px;
+}
+
+.leg {
+    width: 10px;
+    height: 40px;
+    background-color: pink;
+    border: 2px solid purple;
+    border-radius: 5px;
+}
+
+.left-leg {
+    transform: rotate(-15deg);
+}
+
+.right-leg {
+    transform: rotate(15deg);
+}
+
+@keyframes armSwing {
+    0%, 100% { transform: rotate(-30deg); }
+    50% { transform: rotate(-40deg); }
+}
+
+@keyframes armSwingRight {
+    0%, 100% { transform: rotate(30deg); }
+    50% { transform: rotate(40deg); }
+}
+
+@keyframes legSwing {
+    0%, 100% { transform: rotate(-15deg); }
+    50% { transform: rotate(-25deg); }
+}
+
+@keyframes legSwingRight {
+    0%, 100% { transform: rotate(15deg); }
+    50% { transform: rotate(25deg); }
+}
+
+.character.moving .left-arm {
+    animation: armSwing 0.5s infinite;
+}
+
+.character.moving .right-arm {
+    animation: armSwingRight 0.5s infinite;
+}
+
+.character.moving .left-leg {
+    animation: legSwing 0.5s infinite;
+}
+
+.character.moving .right-leg {
+    animation: legSwingRight 0.5s infinite;
+} 
+
+/* 添加翻跟头动画 */
+@keyframes flipLeft {
+    0% {
+        transform: translateX(-50%) rotate(0deg);
+    }
+    100% {
+        transform: translateX(-50%) rotate(-360deg);
+    }
+}
+
+@keyframes flipRight {
+    0% {
+        transform: translateX(-50%) rotate(0deg);
+    }
+    100% {
+        transform: translateX(-50%) rotate(360deg);
+    }
+}
+
+/* 添加翻跟头的类 */
+.character.flip-left {
+    animation: flipLeft 0.8s ease-in-out;
+}
+
+.character.flip-right {
+    animation: flipRight 0.8s ease-in-out;
+} 
+
+/* 修改树的样式 */
+.tree {
+    position: absolute;
+    z-index: 1;
+}
+
+/* 树干 */
+.tree::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 120px;
+    background: linear-gradient(to right, #543a20, #8b4513, #543a20);
+    border-radius: 5px;
+}
+
+/* 树冠 */
+.tree::after {
+    content: '';
+    position: absolute;
+    bottom: 110px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 180px;
+    background: #90EE90;
+    border-radius: 70% 70% 60% 60%;
+    box-shadow: inset -15px -15px 15px rgba(0,0,0,0.2);
+}
+
+/* 添加树叶堆 */
+.tree-leaves {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    height: 30px;
+    z-index: 0;
+}
+
+/* 创建多层树叶 */
+.tree-leaves::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        ellipse at center,
+        #4a8505 0%,
+        #3d7104 60%,
+        transparent 100%
+    );
+    border-radius: 50%;
+    opacity: 0.7;
+}
+
+.tree-leaves::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: 10%;
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(
+        ellipse at center,
+        #5c9c0d 0%,
+        #4a8505 60%,
+        transparent 100%
+    );
+    border-radius: 50%;
+    opacity: 0.5;
+}
+
+/* 调整每棵树的树叶大小 */
+.tree1 .tree-leaves {
+    transform: translateX(-50%) scale(0.7);
+}
+
+.tree2 .tree-leaves {
+    transform: translateX(-50%) scale(1.1);
+}
+
+.tree3 .tree-leaves {
+    transform: translateX(-50%) scale(0.9);
+}
+
+.tree4 .tree-leaves {
+    transform: translateX(-50%) scale(0.8);
+}
+
+/* 添加树叶飘动动画 */
+@keyframes leafSway {
+    0%, 100% {
+        transform: translateX(-50%) scale(1);
+    }
+    50% {
+        transform: translateX(-52%) scale(1.02);
+    }
+}
+
+.tree-leaves {
+    animation: leafSway 3s ease-in-out infinite;
+}
+
+/* 调整四棵树的位置和大小 */
+.tree1 {
+    left: 15%;
+    bottom: 30%;
+    transform: scale(0.7);
+}
+
+.tree2 {
+    left: 28%;
+    bottom: 25%;
+    transform: scale(1.1);
+}
+
+.tree3 {
+    right: 25%;
+    bottom: 28%;
+    transform: scale(0.9);
+}
+
+.tree4 {
+    right: 12%;
+    bottom: 22%;
+    transform: scale(0.8);
+}
+
+/* 重新设计玫瑰花丛 */
+.flowers {
+    position: absolute;
+    bottom: 5%;
+    width: 100%;
+    height: 150px;
+    pointer-events: none;
+}
+
+.flower {
+    position: absolute;
+    width: 120px;
+    height: 150px;
+}
+
+/* 玫瑰花的茎和叶子 */
+.flower::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 4px;
+    height: 60px;
+    background: #2d5a27;
+    transform-origin: bottom center;
+}
+
+/* 玫瑰花瓣 */
+.flower::after {
+    content: '';
+    position: absolute;
+    bottom: 40px;
+    left: calc(50% - 15px);
+    width: 30px;
+    height: 30px;
+    background: #ff69b4;
+    border-radius: 50%;
+    box-shadow: 
+        -10px -10px 0 #ff69b4,
+        10px -10px 0 #ff69b4,
+        -15px 0 0 #ff69b4,
+        15px 0 0 #ff69b4,
+        -10px 10px 0 #ff69b4,
+        10px 10px 0 #ff69b4,
+        0 15px 0 #ff69b4;
+    animation: roseBloom 5s ease-in-out infinite;
+}
+
+/* 为每朵花添加叶子 */
+.flower-leaves {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.flower-leaves::before,
+.flower-leaves::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 10px;
+    background: #3a7a3a;
+    border-radius: 10px 0;
+    bottom: 20px;
+}
+
+.flower-leaves::before {
+    left: 40%;
+    transform: rotate(-30deg);
+}
+
+.flower-leaves::after {
+    right: 40%;
+    transform: rotate(30deg);
+}
+
+/* 调整花丛位置 */
+.flower1 { left: 40%; bottom: 0; transform: scale(1.2); }
+.flower2 { left: 45%; bottom: 20px; transform: scale(0.9); }
+.flower3 { left: 50%; bottom: 5px; transform: scale(1.1); }
+.flower4 { left: 55%; bottom: 15px; transform: scale(0.8); }
+.flower5 { left: 48%; bottom: 10px; transform: scale(1); }
+
+@keyframes roseBloom {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* 添加花瓣飘落效果 */
+.falling-petals {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.petal {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: rgba(255, 105, 180, 0.7);
+    border-radius: 50% 0 50% 50%;
+    animation: falling 4s linear infinite;
+}
+
+@keyframes falling {
+    0% {
+        transform: translate(0, -10%) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(20px, 100%) rotate(360deg);
+        opacity: 0;
+    }
+} 
+
+/* 添加云朵飘动动画 */
+@keyframes floatCloud {
+    0% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(50px);
+    }
+    100% {
+        transform: translateX(0);
+    }
+} 
+
+/* 添加头发样式 */
+.hair {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 110px;
+    height: 35px;
+    z-index: 3;
+}
+
+/* 主要头发 */
+.hair::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #333;
+    border-radius: 50px 50px 0 0;
+    box-shadow: inset 0 5px 10px rgba(0,0,0,0.3);
+}
+
+/* 头发刘海 */
+.hair::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 20px;
+    background: #333;
+    border-radius: 0 0 45px 45px;
+}
+
+/* 两侧的头发 */
+.hair-side {
+    position: absolute;
+    width: 20px;
+    height: 40px;
+    background: #333;
+    top: 15px;
+}
+
+.hair-left {
+    left: -15px;
+    transform: rotate(-15deg);
+    border-radius: 10px 0 0 20px;
+}
+
+.hair-right {
+    right: -15px;
+    transform: rotate(15deg);
+    border-radius: 0 10px 20px 0;
+} 

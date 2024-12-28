@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>趣味数学游戏</title>
+    <!-- 添加 Font Awesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- 添加 Animate.css 动画库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f9ff;
+            font-family: Arial, sans-serif;
+        }
+        .game-container {
+            text-align: center;
+            background: white;
+            padding: 3rem;
+            border-radius: 1rem;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            width: 80%;
+            max-width: 1000px;
+        }
+        .visual-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 1rem;
+        }
+        .apple-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+        }
+        .apple {
+            font-size: 40px;
+            color: #e11d48;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .apple:hover {
+            transform: scale(1.1);
+        }
+
+        .apple.fade-out {
+            opacity: 0.2;
+            transform: scale(0.8);
+        }
+
+        .result-container {
+            min-height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .animate__animated {
+            animation-duration: 0.5s;
+        }
+
+        .operation-symbol {
+            font-size: 2.5rem;
+            margin: 0 1rem;
+            color: #2563eb;
+        }
+        .question {
+            font-size: 2rem;
+            margin: 1rem 0;
+            color: #2563eb;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .option-btn {
+            padding: 1rem;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            background: #dbeafe;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .option-btn:hover {
+            background: #bfdbfe;
+        }
+        .score {
+            font-size: 1.2rem;
+            color: #059669;
+        }
+        .feedback {
+            height: 2rem;
+            margin: 1rem 0;
+            font-size: 1.2rem;
+        }
+        .correct {
+            color: #059669;
+        }
+        .wrong {
+            color: #dc2626;
+        }
+
+        .number-blocks {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            align-items: flex-start;
+            margin: 1rem;
+            position: relative;
+        }
+
+        .digit-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .place-value-container {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        .place-value {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .block-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: center;
+            min-width: 120px;
+        }
+
+        .block-row {
+            display: flex;
+            gap: 2px;
+            background: #dbeafe;
+            padding: 5px;
+            border-radius: 5px;
+            border: 2px solid #60a5fa;
+        }
+
+        .block-unit {
+            width: 20px;
+            height: 20px;
+            background: #1e40af;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .block-unit.borrowed {
+            border: 2px solid #dc2626;
+            animation: pulse 1s infinite;
+        }
+
+        .block-unit.subtracted {
+            border: 2px dashed #dc2626;
+            background: transparent;
+        }
+
+        .place-label {
+            font-size: 1rem;
+            color: #4b5563;
+            font-weight: bold;
+        }
+
+        .borrow-arrow {
+            position: absolute;
+            border-left: 2px dashed #dc2626;
+            border-bottom: 2px dashed #dc2626;
+            width: 30px;
+            height: 40px;
+            top: -20px;
+            right: -15px;
+            display: none;
+        }
+
+        .borrow-arrow.show {
+            display: block;
+            animation: showArrow 0.5s forwards;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes showArrow {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .level-selector {
+            margin: 1rem 0;
+            padding: 0.5rem;
+            font-size: 1.2rem;
+            border-radius: 0.5rem;
+            border: 2px solid #2563eb;
+            background: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>趣味数学游戏</h1>
+        <select id="levelSelector" class="level-selector">
+            <option value="1">级别 1 (10以内)</option>
+            <option value="2">级别 2 (50以内)</option>
+            <option value="3">级别 3 (100以内)</option>
+        </select>
+        <div class="score">得分: <span id="score">0</span></div>
+        <div class="question" id="question"></div>
+        <div class="visual-area">
+            <div class="apple-container" id="visualContainer"></div>
+            <div class="result-container" id="resultContainer"></div>
+        </div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <script>
+        let score = 0;
+        let currentAnswer = 0;
+        let currentLevel = 1;
+
+        // 添加苹果图标 HTML
+        const appleHtml = '<i class="fa-solid fa-apple-whole apple"></i>';
+
+        // 更新难度级别范围
+        function getLevelRange(level) {
+            switch(parseInt(level)) {
+                case 1: return 10;
+                case 2: return 50;
+                case 3: return 100;
+                default: return 10;
+            }
+        }
+
+        // 监听难度选择
+        document.getElementById('levelSelector').addEventListener('change', function(e) {
+            currentLevel = parseInt(e.target.value);
+            score = 0;
+            document.getElementById('score').textContent = '0';
+            generateQuestion();
+        });
+
+        function generateQuestion() {
+            const operations = ['+', '-'];
+            const operation = operations[Math.floor(Math.random() * 2)];
+            const maxNum = getLevelRange(currentLevel);
+            let num1, num2;
+
+            if (operation === '+') {
+                num1 = Math.floor(Math.random() * (maxNum * 0.6)) + 1;
+                num2 = Math.floor(Math.random() * (maxNum - num1)) + 1;
+                currentAnswer = num1 + num2;
+            } else {
+                num1 = Math.floor(Math.random() * (maxNum - 1)) + 2;
+                num2 = Math.floor(Math.random() * num1);
+                currentAnswer = num1 - num2;
+            }
+
+            document.getElementById('question').textContent = `${num1} ${operation} ${num2} = ?`;
+            visualizeOperation(num1, num2, operation);
+            generateOptions(currentAnswer, maxNum);
+        }
+
+        function createNumberBlock(number, isSubtraction = false, showBorrowing = false) {
+            const container = document.createElement('div');
+            container.className = 'digit-group animate__animated animate__fadeIn';
+            
+            const placeValueContainer = document.createElement('div');
+            placeValueContainer.className = 'place-value-container';
+            
+            const tens = Math.floor(number / 10);
+            const ones = number % 10;
+            
+            // 创建十位数值表示
+            const tensPlace = document.createElement('div');
+            tensPlace.className = 'place-value';
+            
+            const tensContainer = document.createElement('div');
+            tensContainer.className = 'block-container';
+            
+            if (tens > 0) {
+                const tensBlocks = document.createElement('div');
+                tensBlocks.className = 'block-row';
+                
+                for (let i = 0; i < tens; i++) {
+                    const unit = document.createElement('div');
+                    unit.className = 'block-unit';
+                    if (isSubtraction) {
+                        unit.classList.add('subtracted');
+                    }
+                    tensBlocks.appendChild(unit);
+                }
+                
+                tensContainer.appendChild(tensBlocks);
+            }
+            
+            const tensLabel = document.createElement('div');
+            tensLabel.className = 'place-label';
+            tensLabel.textContent = '十位';
+            tensContainer.appendChild(tensLabel);
+            
+            tensPlace.appendChild(tensContainer);
+            
+            // 创建个位数值表示
+            const onesPlace = document.createElement('div');
+            onesPlace.className = 'place-value';
+            
+            const onesContainer = document.createElement('div');
+            onesContainer.className = 'block-container';
+            
+            if (ones > 0 || tens === 0) {
+                const onesBlocks = document.createElement('div');
+                onesBlocks.className = 'block-row';
+                
+                for (let i = 0; i < ones; i++) {
+                    const unit = document.createElement('div');
+                    unit.className = 'block-unit';
+                    if (isSubtraction) {
+                        unit.classList.add('subtracted');
+                    }
+                    onesBlocks.appendChild(unit);
+                }
+                
+                onesContainer.appendChild(onesBlocks);
+            }
+            
+            const onesLabel = document.createElement('div');
+            onesLabel.className = 'place-label';
+            onesLabel.textContent = '个位';
+            onesContainer.appendChild(onesLabel);
+            
+            onesPlace.appendChild(onesContainer);
+            
+            // 添加借位箭头
+            if (showBorrowing) {
+                const arrow = document.createElement('div');
+                arrow.className = 'borrow-arrow';
+                tensPlace.appendChild(arrow);
+                
+                // 延迟显示箭头
+                setTimeout(() => {
+                    arrow.classList.add('show');
+                }, 500);
+            }
+            
+            placeValueContainer.appendChild(tensPlace);
+            placeValueContainer.appendChild(onesPlace);
+            container.appendChild(placeValueContainer);
+            
+            return container;
+        }
+
+        function visualizeOperation(num1, num2, operation) {
+            const container = document.getElementById('visualContainer');
+            container.innerHTML = '';
+            
+            const numberBlocks = document.createElement('div');
+            numberBlocks.className = 'number-blocks';
+            
+            // 第一个数字的可视化
+            const firstNumber = createNumberBlock(num1);
+            numberBlocks.appendChild(firstNumber);
+            
+            // 运算符
+            const operationDiv = document.createElement('div');
+            operationDiv.className = 'operation-symbol animate__animated animate__bounceIn';
+            operationDiv.textContent = operation;
+            numberBlocks.appendChild(operationDiv);
+            
+            // 第二个数字的可视化
+            const needsBorrowing = operation === '-' && (num1 % 10) < (num2 % 10);
+            const secondNumber = createNumberBlock(num2, operation === '-', needsBorrowing);
+            numberBlocks.appendChild(secondNumber);
+            
+            // 等号
+            const equalsDiv = document.createElement('div');
+            equalsDiv.className = 'operation-symbol animate__animated animate__bounceIn';
+            equalsDiv.textContent = '=';
+            numberBlocks.appendChild(equalsDiv);
+            
+            container.appendChild(numberBlocks);
+            
+            // 如果是减法且需要借位，添加动画效果
+            if (needsBorrowing) {
+                const tensUnits = firstNumber.querySelectorAll('.block-unit');
+                if (tensUnits.length > 0) {
+                    setTimeout(() => {
+                        tensUnits[tensUnits.length - 1].classList.add('borrowed');
+                    }, 1000);
+                }
+            }
+        }
+
+        function generateOptions(answer, maxNum) {
+            const options = [answer];
+            while (options.length < 4) {
+                const option = Math.floor(Math.random() * maxNum) + 1;
+                if (!options.includes(option)) {
+                    options.push(option);
+                }
+            }
+
+            // 打乱选项顺序
+            options.sort(() => Math.random() - 0.5);
+
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => checkAnswer(option);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function checkAnswer(selectedAnswer) {
+            const feedback = document.getElementById('feedback');
+            const resultContainer = document.getElementById('resultContainer');
+            
+            if (selectedAnswer === currentAnswer) {
+                score += 10;
+                feedback.textContent = '答对了！太棒了！';
+                feedback.className = 'feedback correct animate__animated animate__bounce';
+                
+                // 显示正确答案的数字块
+                resultContainer.innerHTML = '';
+                resultContainer.appendChild(createNumberBlock(currentAnswer));
+            } else {
+                feedback.textContent = '答错了，再试一次吧！';
+                feedback.className = 'feedback wrong animate__animated animate__shakeX';
+                // 清空结果显示
+                resultContainer.innerHTML = '';
+            }
+            
+            document.getElementById('score').textContent = score;
+
+            // 延迟生成新题目
+            setTimeout(() => {
+                feedback.textContent = '';
+                resultContainer.innerHTML = '';
+                generateQuestion();
+            }, 2000);
+        }
+
+        // 开始游戏
+        generateQuestion();
+    </script>
+</body>
+</html> 
