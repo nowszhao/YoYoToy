@@ -3,6 +3,12 @@
      "source":"bilibili",
      "type":"1", 
      "tags":["AA,BB,CC"], 
-     "videoUrl":"https://www.bilibili.com/video/BV1Mo4y1Y7sh?spm_id_from=333.788.videopod.episodes&vd_source=79076c29b1d9e9bf6dd7b4585a93e6b7&p=3" 
+     "videoUrl"::"https://www.bilibili.com/video/BV1Mo4y1Y7sh?spm_id_from=333.788.videopod.episodes&vd_source=79076c29b1d9e9bf6dd7b4585a93e6b7&p=3" 
+ },{
+     "source":"bilibili",
+     "type":"1", 
+     "tags":["AA,BB,CC"], 
+     "videoUrl:"https://www.bilibili.com/video/BV1xYWBeMERL?spm_id_from=333.788.player.switch&vd_source=79076c29b1d9e9bf6dd7b4585a93e6b7&p=34" 
+  
  }
 ]
