@@ -63,7 +63,7 @@ async def chat(request: ChatRequest):
             logger.error("Image not found: %s", image_path)
             return {"error": "Image not found"}, 404
             
-        logger.info("Processing chat with message length: %d", len(request.message))
+        logger.info("Processing chat with message length: %s", request.message)
         response = await chat_service.chat_with_image(image_path, request.message)
         logger.info("Got response with length: %d", len(response))
         

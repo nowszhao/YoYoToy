@@ -4,6 +4,19 @@ let mediaRecorder = null;
 let audioChunks = [];
 let recordedAudioURL = null;
 
+// 添加画布相关变量
+let isDrawing = false;
+let drawingContext = null;
+let lastX = 0;
+let lastY = 0;
+let canvasScale = { x: 1, y: 1 };
+let imageNaturalSize = { width: 0, height: 0 };
+
+// 添加矩形绘制相关变量
+let startX = 0;
+let startY = 0;
+let rectCoords = null;
+
 // 初始化语音识别
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = new SpeechRecognition();
@@ -36,10 +49,124 @@ async function loadHistoryImages() {
     }
 }
 
+// 初始化画布
+function initializeCanvas() {
+    const canvas = document.getElementById('drawingCanvas');
+    const container = document.getElementById('imageContainer');
+    const currentImage = document.getElementById('currentImage');
+    
+    // 设置画布大小为容器大小
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+    
+    drawingContext = canvas.getContext('2d');
+    drawingContext.strokeStyle = '#FF0000';
+    drawingContext.lineWidth = 2;
+    drawingContext.lineCap = 'round';
+    
+    // 保存图片原始尺寸
+    imageNaturalSize.width = currentImage.naturalWidth;
+    imageNaturalSize.height = currentImage.naturalHeight;
+    
+    // 计算缩放比例
+    updateCanvasScale();
+}
+
+// 更新画布缩放比例
+function updateCanvasScale() {
+    const canvas = document.getElementById('drawingCanvas');
+    const currentImage = document.getElementById('currentImage');
+    
+    canvasScale.x = imageNaturalSize.width / currentImage.clientWidth;
+    canvasScale.y = imageNaturalSize.height / currentImage.clientHeight;
+}
+
+// 获取相对于原始图片的坐标
+function getRelativeCoordinates(x, y) {
+    const canvas = document.getElementById('drawingCanvas');
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    return {
+        x: (x - rect.left) * scaleX / canvasScale.x,
+        y: (y - rect.top) * scaleY / canvasScale.y
+    };
+}
+
+// 画布事件监听器
+function setupCanvasListeners() {
+    const canvas = document.getElementById('drawingCanvas');
+    
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+    
+    // 清除按钮事件
+    document.getElementById('clearCanvas').addEventListener('click', clearCanvas);
+}
+
+function startDrawing(e) {
+    isDrawing = true;
+    const coords = getRelativeCoordinates(e.clientX, e.clientY);
+    startX = coords.x;
+    startY = coords.y;
+    rectCoords = null; // 清除之前的矩形坐标
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+    
+    const canvas = document.getElementById('drawingCanvas');
+    const coords = getRelativeCoordinates(e.clientX, e.clientY);
+    
+    // 清除之前的绘制内容
+    drawingContext.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 绘制新矩形
+    drawingContext.beginPath();
+    drawingContext.rect(
+        Math.min(startX, coords.x),
+        Math.min(startY, coords.y),
+        Math.abs(coords.x - startX),
+        Math.abs(coords.y - startY)
+    );
+    drawingContext.stroke();
+    
+    // 保存矩形坐标（相对坐标）
+    rectCoords = {
+        x1: Math.min(startX, coords.x) / imageNaturalSize.width,
+        y1: Math.min(startY, coords.y) / imageNaturalSize.height,
+        x2: Math.max(startX, coords.x) / imageNaturalSize.width,
+        y2: Math.max(startY, coords.y) / imageNaturalSize.height
+    };
+}
+
+function stopDrawing() {
+    isDrawing = false;
+}
+
+function clearCanvas() {
+    const canvas = document.getElementById('drawingCanvas');
+    drawingContext.clearRect(0, 0, canvas.width, canvas.height);
+    rectCoords = null; // 清除保存的矩形坐标
+}
+
 // 选择图片
 async function selectImage(filename, imageData) {
-    document.getElementById('currentImage').src = imageData;
+    const currentImage = document.getElementById('currentImage');
+    currentImage.src = imageData;
     currentImageName = filename;
+    
+    // 等待图片加载完成后再初始化画布
+    await new Promise((resolve) => {
+        currentImage.onload = () => {
+            initializeCanvas();
+            setupCanvasListeners();
+            resolve();
+        };
+    });
     
     // 清除聊天历史
     clearChatHistory();
@@ -120,8 +247,14 @@ async function sendMessage(message) {
         return;
     }
 
+    // 构建标注区域信息
+    let areaInfo = '';
+    if (rectCoords) {
+        areaInfo = `I specified the rectangular area in the image, and its relative position is (x:${(rectCoords.x1*100).toFixed(1)}%, y:${(rectCoords.y1*100).toFixed(1)}%) to (x:${(rectCoords.x2*100).toFixed(1)}%, y:${(rectCoords.y2*100).toFixed(1)}%)]`;
+    }
+    
     // 添加用户消息到聊天历史
-    addMessageToChat('user', message);
+    addMessageToChat('user', areaInfo + ", and " + message);
     
     // 添加正在输入提示
     addMessageToChat('ai', '', true);
@@ -134,7 +267,7 @@ async function sendMessage(message) {
             },
             body: JSON.stringify({
                 image_name: currentImageName,
-                message: message
+                message: areaInfo+ ", and " + message
             })
         });
 
@@ -473,4 +606,11 @@ function writeString(view, offset, string) {
     for (let i = 0; i < string.length; i++) {
         view.setUint8(offset + i, string.charCodeAt(i));
     }
-} 
+}
+
+// 添加窗口大小改变事件监听
+window.addEventListener('resize', () => {
+    if (currentImageName) {
+        initializeCanvas();
+    }
+}); 
