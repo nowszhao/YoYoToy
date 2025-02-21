@@ -50,7 +50,7 @@ class Game {
         
         this.init();
         this.createSnowflakes(100);
-        this.createElves(3);  // 创建3个黑精灵
+        this.createElves(1000);  // 创建3个黑精灵
         this.createGirl();
         this.createSnowmanSpot();
         this.setupPhysics();

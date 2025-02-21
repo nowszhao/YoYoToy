@@ -1,0 +1,6 @@
+fastapi
+python-multipart
+jinja2
+uvicorn
+openai
+azure-cognitiveservices-speech 
