@@ -34,7 +34,7 @@ class ChatService:
         
         # 初始化对话历史
         self.conversation_history = []
-        self.max_history_tokens = 6000  # 预留2000 tokens给新的对话
+        self.max_history_tokens = 4000  # 预留2000 tokens给新的对话
         logger.info("ChatService initialized with audio cache dir: %s", self.audio_cache_dir)
         
     def encode_image(self, image_path):
@@ -50,7 +50,11 @@ class ChatService:
         total_length = 0
         trimmed_messages = []
         
-        # 从最新的消息开始计算
+        # 保留最新消息的图片，移除历史消息的图片
+        latest_image = None
+        if messages and "image_url" in messages[-1]:
+            latest_image = messages[-1]["image_url"]
+        
         for message in reversed(messages):
             # 估算当前消息的token数量
             message_length = 0
@@ -65,9 +69,17 @@ class ChatService:
             # 如果添加这条消息后仍在限制内，则保留
             if total_length + message_length <= self.max_history_tokens:
                 total_length += message_length
-                trimmed_messages.insert(0, message)
+                msg_copy = message.copy()
+                # 移除历史消息中的图片URL
+                if "image_url" in msg_copy and message != messages[-1]:
+                    del msg_copy["image_url"]
+                trimmed_messages.insert(0, msg_copy)
             else:
                 break
+        
+        # 如果最新消息有图片，确保添加回去
+        if latest_image and messages:
+            trimmed_messages[-1]["image_url"] = latest_image
         
         return trimmed_messages
 
@@ -109,10 +121,6 @@ class ChatService:
             
             messages = [
                 {
-                    "role": "system",
-                    "content": "你是一个耐心的英语老师，正在教一个6岁的小女孩认识图片中的内容。请使用简单的英语单词。"
-                },
-                {
                     "role": "user",
                     "content": [
                         {"type": "image_url", "image_url": {"url": image_url}},
@@ -146,52 +154,59 @@ class ChatService:
         try:
             image_url = self.encode_image(image_path)
             
+            prompt = f"""
+                你现在是一个英语老师，我是英语只有 100 个单词词汇的 6 岁小女孩儿，你在通过图片教我英语，要求如下：
+                1、请基于我提供的图片跟我使用交流，需要你一步一步不停的引导我进行沟通，直到我用英语理解图片中的内容,你总是主动发问
+                2、使用简答的词汇与我对话，每次最多输出 20 个单词。
+                3、如果我回答或表达不对或不地道，请先耐心纠正，告知我正确的表达
+                4、请使用微软 tts 的 ssml格式化回复，比如对于难的词汇或我要求说慢点，你都要通过 ssml 来控制说话的语气，需要保证整体的表达自然，ssml格式示例如下：
+                <speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xml:lang='en-US'>
+                    <voice name='en-US-AvaMultilingualNeural'>
+                        <mstts:express-as style='default'>
+                            <prosody rate="0.8" pitch="+5%">
+                                你好啊，大师
+                            </prosody>
+                            <break time="500ms"/>
+                            <prosody rate="1.2" pitch="-5%">
+                                这是一个使用SSML的示例。
+                            </prosody>
+                            <break time="500ms"/>
+                            <prosody volume="x-loud">
+                                你可以调整语速、音调和音量。
+                            </prosody>
+                            <break time="500ms"/>
+                            <prosody volume="x-soft">
+                                这是一个音量较小的示例。
+                            </prosody>
+                        </mstts:express-as>
+                    </voice>
+                </speak>
+                4、微软 tts使用这些声音：en-US-SerenaMultilingualNeural,en-US-AvaMultilingualNeural,en-US-PhoebeMultilingualNeural,en-US-EmmaNeural
+
+
+                {message}
+            """
+
+
+            logger.info("Prompt: %s", prompt)
+
             # 构建用户消息
             user_message = {
                 "role": "user",
                 "content": [
                     {"type": "image_url", "image_url": {"url": image_url}},
-                    {"type": "text", "text": message}
+                    {"type": "text", "text": prompt}
                 ]
             }
             
-            # 系统提示消息
-            system_message = {
-                "role": "system",
-                "content": """
-                    你是一个耐心的英语老师，正在教一个6岁的小女孩认识图片中的内容，她的英语只有 100 个单词词汇的 6 岁小女孩儿，请基于她提供的图片进行交流，需要你不停的引导她沟通，要求如下：
-                    1、使用简答的词汇与对话
-                    2、如果她回答不对，请耐心纠正
-                    3、输出内容请使用微软 tts 的 ssml格式化回复，比如对于难的词汇或我要求说慢点，你都要通过 ssml 来控制说话的语气，ssml 格式示例如下：
-                        <speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='http://www.w3.org/2001/mstts' xml:lang='en-US'>
-                            <voice name='en-US-AndrewMultilingualNeural'>
-                                <mstts:express-as style='default'>
-                                    <prosody rate="0.8" pitch="+5%">
-                                        你好啊，大师
-                                    </prosody>
-                                    <break time="500ms"/>
-                                    <prosody rate="1.2" pitch="-5%">
-                                        这是一个使用SSML的示例。
-                                    </prosody>
-                                    <break time="500ms"/>
-                                    <prosody volume="x-loud">
-                                        你可以调整语速、音调和音量。
-                                    </prosody>
-                                    <break time="500ms"/>
-                                    <prosody volume="x-soft">
-                                        这是一个音量较小的示例。
-                                    </prosody>
-                                </mstts:express-as>
-                            </voice>
-                        </speak>
-                """
-            }
+             
             
             # 裁剪历史消息
             trimmed_history = self.trim_conversation_history(self.conversation_history)
-            
+
             # 构建完整的消息列表
-            messages = [system_message] + trimmed_history + [user_message]
+            messages = trimmed_history + [user_message]
+            # messages =  [user_message]
             
             logger.info("Sending messages to KIMI: %d", len(messages))
 
@@ -248,45 +263,59 @@ class ChatService:
             
             logger.info("Cache miss or disabled, generating new audio")
             
-            # 创建音频配置
-            audio_config = speechsdk.audio.AudioOutputConfig(filename=str(cache_file))
-            
-            # 创建语音合成器
-            speech_synthesizer = speechsdk.SpeechSynthesizer(
-                speech_config=self.speech_config,
-                audio_config=audio_config
-            )
-            
-            # 添加详细的错误处理
-            error_msg = None
-            def handle_canceled(evt):
-                nonlocal error_msg
-                error_msg = f"TTS canceled: {evt.error_details}"
-                logger.error("TTS canceled: %s", evt.error_details)
-            
-            # 订阅取消事件
-            speech_synthesizer.synthesis_canceled.connect(handle_canceled)
-            
-            logger.info("Calling Azure TTS with SSML text")
-            result = speech_synthesizer.speak_ssml_async(text).get()
-            
-            if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-                logger.info("TTS synthesis completed successfully")
+            # 创建临时文件用于保存音频
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
+                temp_path = temp_file.name
                 
-                # 从文件读取音频数据
-                with open(cache_file, "rb") as f:
-                    audio_data = f.read()
+                # 创建音频配置
+                audio_config = speechsdk.audio.AudioOutputConfig(filename=temp_path)
                 
-                logger.info("Generated audio data size: %d bytes", len(audio_data))
-                return base64.b64encode(audio_data).decode('utf-8')
-            else:
-                error_details = error_msg if error_msg else f"TTS failed with reason: {result.reason}"
-                logger.error(error_details)
-                return None
-            
+                # 创建语音合成器
+                speech_synthesizer = speechsdk.SpeechSynthesizer(
+                    speech_config=self.speech_config,
+                    audio_config=audio_config
+                )
+                
+                # 添加详细的错误处理
+                error_msg = None
+                def handle_canceled(evt):
+                    nonlocal error_msg
+                    error_msg = f"TTS canceled: {evt.error_details}"
+                    logger.error("TTS canceled: %s", evt.error_details)
+                
+                # 订阅取消事件
+                speech_synthesizer.synthesis_canceled.connect(handle_canceled)
+                
+                logger.info("Calling Azure TTS with SSML text")
+                result = speech_synthesizer.speak_ssml_async(text).get()
+                
+                if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+                    logger.info("TTS synthesis completed successfully")
+                    
+                    # 从临时文件读取音频数据
+                    with open(temp_path, "rb") as f:
+                        audio_data = f.read()
+                    
+                    # 保存到缓存
+                    if use_cache:
+                        with open(cache_file, "wb") as f:
+                            f.write(audio_data)
+                    
+                    # 删除临时文件
+                    os.unlink(temp_path)
+                    
+                    logger.info("Generated audio data size: %d bytes", len(audio_data))
+                    return base64.b64encode(audio_data).decode('utf-8')
+                else:
+                    error_details = error_msg if error_msg else f"TTS failed with reason: {result.reason}"
+                    logger.error(error_details)
+                    if os.path.exists(temp_path):
+                        os.unlink(temp_path)
+                    return None
+                
         except Exception as e:
             logger.exception("Error in text_to_speech: %s", str(e))
-            return None 
+            return None
 
     def speech_to_text(self, audio_data):
         try:

@@ -1,8 +1,8 @@
 import os
-from fastapi import FastAPI, UploadFile, File, WebSocket, Form
+from fastapi import FastAPI, UploadFile, File, WebSocket, Form, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi import Request
 import uvicorn
 from .chat_service import ChatService
@@ -104,23 +104,34 @@ async def analyze_image(image_name: str):
         logger.error(f"Error in analyze endpoint: {str(e)}")
         return {"error": str(e)}, 500
 
+@app.delete("/images/{filename}")
+async def delete_image(filename: str):
+    try:
+        image_path = os.path.join(Config.UPLOAD_FOLDER, filename)
+        if os.path.exists(image_path):
+            os.remove(image_path)
+            return JSONResponse(content={"success": True})
+        else:
+            raise HTTPException(status_code=404, detail="Image not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/images")
 async def get_images():
     try:
         images = []
         for filename in os.listdir(Config.UPLOAD_FOLDER):
-            if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
-                image_path = os.path.join(Config.UPLOAD_FOLDER, filename)
-                with open(image_path, "rb") as f:
-                    image_data = base64.b64encode(f.read()).decode('utf-8')
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+                file_path = os.path.join(Config.UPLOAD_FOLDER, filename)
+                with open(file_path, "rb") as f:
+                    image_data = base64.b64encode(f.read()).decode()
                 images.append({
                     "name": filename,
-                    "data": f"data:image/jpeg;base64,{image_data}"
+                    "data": f"data:image/png;base64,{image_data}"
                 })
         return {"images": images}
     except Exception as e:
-        logger.error(f"Error getting images: {str(e)}")
-        return {"error": str(e)}, 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/replay-audio")
 async def replay_audio(request: AudioReplayRequest):

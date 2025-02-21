@@ -33,20 +33,124 @@ async function loadHistoryImages() {
         gallery.innerHTML = ''; // 清空现有内容
         
         data.images.forEach(image => {
-            const div = document.createElement('div');
-            div.className = 'shrink-0';
+            const container = document.createElement('div');
+            container.className = 'thumbnail-container shrink-0';
             
             const img = document.createElement('img');
             img.src = image.data;
             img.className = 'image-thumbnail';
             img.onclick = () => selectImage(image.name, image.data);
             
-            div.appendChild(img);
-            gallery.appendChild(div);
+            // 添加删除按钮
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-button';
+            deleteBtn.innerHTML = '×';
+            deleteBtn.onclick = async (e) => {
+                e.stopPropagation(); // 防止触发图片选择
+                await deleteImage(image.name);
+            };
+            
+            container.appendChild(img);
+            container.appendChild(deleteBtn);
+            gallery.appendChild(container);
         });
+        
+        // 更新空状态显示
+        updateEmptyState(data.images.length === 0);
+        
     } catch (error) {
         console.error('Failed to load images:', error);
     }
+}
+
+// 修改删除图片函数
+async function deleteImage(imageName) {
+    try {
+        const response = await fetch(`/images/${imageName}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            // 如果删除的是当前选中的图片，清除选中状态
+            if (imageName === currentImageName) {
+                clearCurrentImage();
+            }
+            // 重新加载图片列表
+            await loadHistoryImages();
+        } else {
+            const errorData = await response.json();
+            console.error('Failed to delete image:', errorData.detail);
+            alert('Failed to delete image: ' + (errorData.detail || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        alert('Error deleting image: ' + error.message);
+    }
+}
+
+// 添加清除当前图片函数
+function clearCurrentImage() {
+    currentImageName = null;
+    const currentImage = document.getElementById('currentImage');
+    const drawingCanvas = document.getElementById('drawingCanvas');
+    
+    currentImage.src = '';
+    currentImage.classList.remove('visible');
+    drawingCanvas.classList.remove('visible');
+    
+    // 清除画布内容
+    if (drawingContext) {
+        drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    }
+    
+    // 显示空状态
+    updateEmptyState(true);
+}
+
+// 添加更新空状态显示函数
+function updateEmptyState(isEmpty) {
+    const emptyState = document.getElementById('emptyState');
+    const currentImage = document.getElementById('currentImage');
+    const drawingCanvas = document.getElementById('drawingCanvas');
+    
+    if (isEmpty) {
+        emptyState.classList.add('visible');
+        currentImage.classList.remove('visible');
+        drawingCanvas.classList.remove('visible');
+    } else {
+        emptyState.classList.remove('visible');
+    }
+}
+
+// 修改选择图片函数
+function selectImage(imageName, imageData) {
+    currentImageName = imageName;
+    const currentImage = document.getElementById('currentImage');
+    const drawingCanvas = document.getElementById('drawingCanvas');
+    
+    // 更新图片
+    currentImage.src = imageData;
+    currentImage.classList.add('visible');
+    drawingCanvas.classList.add('visible');
+    
+    // 隐藏空状态
+    updateEmptyState(false);
+    
+    // 初始化画布
+    initializeCanvas();
+    
+    // 添加画布事件监听
+    addCanvasEventListeners();
+    
+    // 更新缩略图选中状态
+    const thumbnails = document.querySelectorAll('.image-thumbnail');
+    thumbnails.forEach(thumbnail => {
+        if (thumbnail.src === imageData) {
+            thumbnail.classList.add('active');
+        } else {
+            thumbnail.classList.remove('active');
+        }
+    });
 }
 
 // 初始化画布
@@ -55,47 +159,36 @@ function initializeCanvas() {
     const container = document.getElementById('imageContainer');
     const currentImage = document.getElementById('currentImage');
     
-    // 设置画布大小为容器大小
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
+    // 等待图片完全加载
+    if (!currentImage.complete) {
+        currentImage.onload = () => initializeCanvas();
+        return;
+    }
+    
+    // 获取图片实际显示尺寸
+    const rect = currentImage.getBoundingClientRect();
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    
+    // 设置画布尺寸与图片显示尺寸完全相同
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
+    
+    // 设置画布样式尺寸
+    canvas.style.width = `${displayWidth}px`;
+    canvas.style.height = `${displayHeight}px`;
+    
+    // 设置画布位置，与图片完全重叠
+    canvas.style.top = `${rect.top - container.getBoundingClientRect().top}px`;
+    canvas.style.left = `${rect.left - container.getBoundingClientRect().left}px`;
     
     drawingContext = canvas.getContext('2d');
     drawingContext.strokeStyle = '#FF0000';
     drawingContext.lineWidth = 2;
-    drawingContext.lineCap = 'round';
-    
-    // 保存图片原始尺寸
-    imageNaturalSize.width = currentImage.naturalWidth;
-    imageNaturalSize.height = currentImage.naturalHeight;
-    
-    // 计算缩放比例
-    updateCanvasScale();
 }
 
-// 更新画布缩放比例
-function updateCanvasScale() {
-    const canvas = document.getElementById('drawingCanvas');
-    const currentImage = document.getElementById('currentImage');
-    
-    canvasScale.x = imageNaturalSize.width / currentImage.clientWidth;
-    canvasScale.y = imageNaturalSize.height / currentImage.clientHeight;
-}
-
-// 获取相对于原始图片的坐标
-function getRelativeCoordinates(x, y) {
-    const canvas = document.getElementById('drawingCanvas');
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    
-    return {
-        x: (x - rect.left) * scaleX / canvasScale.x,
-        y: (y - rect.top) * scaleY / canvasScale.y
-    };
-}
-
-// 画布事件监听器
-function setupCanvasListeners() {
+// 添加画布事件监听
+function addCanvasEventListeners() {
     const canvas = document.getElementById('drawingCanvas');
     
     canvas.addEventListener('mousedown', startDrawing);
@@ -103,18 +196,22 @@ function setupCanvasListeners() {
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseout', stopDrawing);
     
-    // 清除按钮事件
-    document.getElementById('clearCanvas').addEventListener('click', clearCanvas);
+    // 添加清除按钮事件
+    const clearButton = document.getElementById('clearCanvas');
+    if (clearButton) {
+        clearButton.addEventListener('click', clearDrawing);
+    }
 }
 
+// 开始绘制
 function startDrawing(e) {
     isDrawing = true;
     const coords = getRelativeCoordinates(e.clientX, e.clientY);
     startX = coords.x;
     startY = coords.y;
-    rectCoords = null; // 清除之前的矩形坐标
 }
 
+// 绘制过程
 function draw(e) {
     if (!isDrawing) return;
     
@@ -136,80 +233,86 @@ function draw(e) {
     
     // 保存矩形坐标（相对坐标）
     rectCoords = {
-        x1: Math.min(startX, coords.x) / imageNaturalSize.width,
-        y1: Math.min(startY, coords.y) / imageNaturalSize.height,
-        x2: Math.max(startX, coords.x) / imageNaturalSize.width,
-        y2: Math.max(startY, coords.y) / imageNaturalSize.height
+        x1: Math.min(startX, coords.x) / canvas.width,
+        y1: Math.min(startY, coords.y) / canvas.height,
+        x2: Math.max(startX, coords.x) / canvas.width,
+        y2: Math.max(startY, coords.y) / canvas.height
     };
 }
 
+// 停止绘制
 function stopDrawing() {
     isDrawing = false;
 }
 
-function clearCanvas() {
+// 清除绘制
+function clearDrawing() {
     const canvas = document.getElementById('drawingCanvas');
     drawingContext.clearRect(0, 0, canvas.width, canvas.height);
-    rectCoords = null; // 清除保存的矩形坐标
+    rectCoords = null;
 }
 
-// 选择图片
-async function selectImage(filename, imageData) {
-    const currentImage = document.getElementById('currentImage');
-    currentImage.src = imageData;
-    currentImageName = filename;
-    
-    // 等待图片加载完成后再初始化画布
-    await new Promise((resolve) => {
-        currentImage.onload = () => {
-            initializeCanvas();
-            setupCanvasListeners();
-            resolve();
-        };
-    });
-    
-    // 清除聊天历史
-    clearChatHistory();
-    
-    // 更新缩略图选中状态
-    document.querySelectorAll('.image-thumbnail').forEach(img => {
-        img.classList.remove('active');
-        if (img.src === imageData) {
-            img.classList.add('active');
-        }
-    });
-    
-    // 分析新选择的图片
-    try {
-        const response = await fetch('/analyze', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                image_name: filename
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        addMessageToChat('ai', data.text);
-        if (data.audio) {
-            playAudioResponse(data.audio);
-        }
-    } catch (error) {
-        console.error('Analysis failed:', error);
-        addMessageToChat('system', 'Error: Failed to analyze image');
-    }
+// 获取相对坐标
+function getRelativeCoordinates(x, y) {
+    const canvas = document.getElementById('drawingCanvas');
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: x - rect.left,
+        y: y - rect.top
+    };
 }
 
 // 页面加载时获取历史图片
 document.addEventListener('DOMContentLoaded', () => {
     loadHistoryImages();
+    
+    // 添加粘贴事件监听
+    document.addEventListener('paste', handlePaste);
 });
+
+// 添加粘贴处理函数
+async function handlePaste(e) {
+    // 获取剪贴板数据
+    const items = e.clipboardData.items;
+    
+    for (let item of items) {
+        if (item.type.indexOf('image') !== -1) {
+            // 获取图片文件
+            const file = item.getAsFile();
+            const timestamp = new Date().getTime();
+            const filename = `pasted_image_${timestamp}.png`;
+            
+            // 创建带有文件名的新文件对象
+            const newFile = new File([file], filename, { type: file.type });
+            
+            // 使用现有的上传逻辑
+            const formData = new FormData();
+            formData.append('file', newFile);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                // 重新加载所有图片
+                await loadHistoryImages();
+                
+                // 选择新上传的图片
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    selectImage(data.filename, e.target.result);
+                };
+                reader.readAsDataURL(newFile);
+            } catch (error) {
+                console.error('Upload failed:', error);
+            }
+            
+            break;
+        }
+    }
+}
 
 // 修改图片上传处理
 document.getElementById('imageUpload').addEventListener('change', async (e) => {
@@ -384,9 +487,15 @@ function playAudioResponse(base64Audio) {
     }
     
     try {
+        console.log('Audio data length:', base64Audio.length);
         const audio = new Audio('data:audio/wav;base64,' + base64Audio);
+        
         audio.onerror = (e) => {
             console.error('Audio playback error:', e);
+        };
+        
+        audio.onloadeddata = () => {
+            console.log('Audio loaded successfully');
         };
         
         const playPromise = audio.play();
